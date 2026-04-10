@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace TaskManager.API.Common;
+namespace TaskManager.API.Services;
 
 public class ServiceResult<T>
 {

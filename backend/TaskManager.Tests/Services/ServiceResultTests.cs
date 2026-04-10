@@ -1,8 +1,8 @@
 using System.Net;
 using Xunit;
-using TaskManager.API.Common;
+using TaskManager.API.Services;
 
-namespace TaskManager.Tests.Common;
+namespace TaskManager.Tests.Services;
 
 public class ServiceResultTests
 {
