@@ -1,18 +1,20 @@
 # TaskBoard – Desafio Técnico Avanade
 
-Aplicação de gerenciamento de tarefas estilo Kanban (inspirado no Trello/Jira), desenvolvida com Angular 17 no front-end e ASP.NET Core 8 Web API no back-end.
+Aplicação de gerenciamento de tarefas estilo Kanban (inspirado no Trello/Jira), desenvolvida com Angular no front-end e ASP.NET Core 9 Web API no back-end.
 
 ## Tecnologias
 
-- **Front-end:** Angular 17 (Standalone Components)
-- **Back-end:** ASP.NET Core 8 Web API (C#)
-- **Banco de dados:** SQL Server
-- **ORM:** Entity Framework Core 8
-- **Comunicação:** REST API (JSON)
+- Front-end: Angular 17 (Standalone Components)
+- Back-end: ASP.NET Core 9 Web API (C#)
+- Banco de dados: SQL Server
+- ORM: Entity Framework Core 9
+- Comunicação: REST API (JSON)
+- Testes: xUnit + EF Core InMemory
+- Containerização: Docker + Docker Compose
 
 ## Funcionalidades
 
-- Board Kanban com 3 colunas: **Pendente**, **Em Andamento**, **Concluída**
+- Board Kanban com 3 colunas: Pendente, Em Andamento, Concluída
 - Criar, editar e excluir tarefas
 - Mover tarefas entre colunas com um clique
 - Prioridade por tarefa (Alta / Média / Baixa) com indicação visual
@@ -35,10 +37,10 @@ docker-compose up --build
 
 Isso sobe três containers:
 - `sqlserver` — SQL Server 2022 Express na porta 1433
-- `api` — ASP.NET Core API na porta 5000 (migrations aplicadas automaticamente na inicialização)
+- `api` — ASP.NET Core 9 API na porta 5000 (migrations aplicadas automaticamente na inicialização)
 - `frontend` — Angular servido via nginx na porta 4200
 
-Acesse em `http://localhost:4200`  
+Acesse em `http://localhost:4200`
 Swagger UI: `http://localhost:5000/swagger`
 
 Para derrubar tudo:
@@ -57,47 +59,33 @@ docker-compose down -v
 
 #### Pré-requisitos
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download)
+- [.NET 9 SDK](https://dotnet.microsoft.com/download)
 - [Node.js 18+](https://nodejs.org/) e npm
 - [Angular CLI](https://angular.io/cli): `npm install -g @angular/cli`
 - SQL Server (local ou Docker)
 
----
-
-#### 1. Back-end (API)
+#### 1. Back-end
 
 ```bash
 cd backend/TaskManager.API
-
-# Restaurar pacotes
 dotnet restore
-
-# Aplicar migrations
 dotnet ef database update
-
-# Rodar a API
 dotnet run
 ```
 
-A API estará disponível em `http://localhost:5000`  
+A API estará disponível em `http://localhost:5000`
 Swagger UI: `http://localhost:5000/swagger`
 
-> Se precisar ajustar a connection string, edite `appsettings.json`:
+> Para ajustar a connection string, edite `appsettings.json`:
 > ```json
 > "DefaultConnection": "Server=localhost;Database=TaskManagerDB;Trusted_Connection=True;TrustServerCertificate=True;"
 > ```
 
----
-
-#### 2. Front-end (Angular)
+#### 2. Front-end
 
 ```bash
 cd frontend
-
-# Instalar dependências
 npm install
-
-# Rodar o servidor de desenvolvimento
 ng serve
 ```
 
@@ -108,14 +96,16 @@ Acesse em `http://localhost:4200`
 ## Testes
 
 ```bash
-cd backend
-dotnet test TaskManager.Tests/TaskManager.Tests.csproj
+dotnet test backend/TaskManager.Tests/TaskManager.Tests.csproj
 ```
 
-Os testes usam EF Core InMemory — sem necessidade de banco de dados. Cobrem:
-- `TarefaService` — todos os métodos (GetAll, GetById, Create, Update, UpdateStatus, Delete)
-- `TarefasController` — status codes HTTP de cada endpoint
-- `ServiceResult` — comportamento de Ok, Created, NotFound, BadRequest, InternalError
+Os testes usam EF Core InMemory — sem necessidade de banco de dados. 28 testes no total.
+
+| Classe | Cobertura |
+|--------|-----------|
+| `TarefaServiceTests` | GetAll, GetById, Create, Update, UpdateStatus, Delete |
+| `TarefasControllerTests` | Status codes HTTP de cada endpoint |
+| `ServiceResultTests` | Ok, Created, NotFound, BadRequest, InternalError |
 
 ---
 
@@ -135,24 +125,32 @@ Os testes usam EF Core InMemory — sem necessidade de banco de dados. Cobrem:
 ## Estrutura do projeto
 
 ```
+├── .gitignore
+├── docker-compose.yml
+│
 ├── backend/
-│   └── TaskManager.API/
-│       ├── Controllers/       # TarefasController
-│       ├── Services/          # TarefaService — lógica de negócio
-│       ├── Models/            # Tarefa — entidade / modelo EF Core
-│       ├── DTOs/              # CreateTarefaDto, UpdateTarefaDto, UpdateStatusDto, TarefaResponseDto
-│       ├── Data/
-│       │   ├── AppDbContext.cs
-│       │   └── Migrations/
-│       ├── Common/            # ServiceResult — wrapper de resposta com StatusCode
-│       └── Program.cs
+│   ├── TaskManager.API/
+│   │   ├── Controllers/       # Endpoints REST da API
+│   │   ├── Data/              # DbContext e Migrations do EF Core
+│   │   ├── DTOs/              # Objetos de transferência de dados (entrada e saída)
+│   │   ├── Models/            # Entidades do banco de dados
+│   │   ├── Services/          # Lógica de negócio e wrapper de resultado
+│   │   ├── appsettings.json
+│   │   ├── appsettings.Docker.json
+│   │   ├── Dockerfile
+│   │   └── Program.cs
+│   │
+│   └── TaskManager.Tests/
+│       ├── Controllers/       # Testes dos endpoints e status codes HTTP
+│       ├── Helpers/           # Utilitários compartilhados entre os testes
+│       └── Services/          # Testes da lógica de negócio e do ServiceResult
 │
 └── frontend/
     └── src/app/
         ├── components/
-        │   ├── kanban-board/  # Tela principal com as colunas
-        │   ├── task-card/     # Card individual de tarefa
-        │   └── task-modal/    # Modal de criação/edição
-        ├── models/            # Interfaces TypeScript
-        └── services/          # TarefaService (HttpClient)
+        │   ├── kanban-board/  # Board principal com as colunas Kanban
+        │   ├── task-card/     # Card individual de cada tarefa
+        │   └── task-modal/    # Modal de criação e edição de tarefas
+        ├── models/            # Interfaces e tipos TypeScript
+        └── services/          # Comunicação com a API via HttpClient
 ```
