@@ -2,7 +2,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm ci
+RUN npm install && npm install --package-lock-only
 
 COPY . .
 RUN npm run build -- --configuration production
